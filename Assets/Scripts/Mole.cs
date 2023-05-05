@@ -44,8 +44,8 @@ public class Mole : MonoBehaviour {
     float elapsed = 0f;
     while (elapsed < showDuration) {
       transform.localPosition = Vector2.Lerp(start, end, elapsed / showDuration);
-      boxCollider2D.offset = Vector2.Lerp(boxOffsetHidden, boxOffset, elapsed / showDuration);
-      boxCollider2D.size = Vector2.Lerp(boxSizeHidden, boxSize, elapsed / showDuration);
+      boxCollider2D.offset = Vector2.Lerp(boxOffsetHidden, boxOffset, elapsed / showDuration); //move the collider box from offset = 1.28 (start at the upper edge of the mole) to offset = 0 (ends at center of the mole, i.e. same as the mole itself), same as moving from y = -2.56(startPosition.y)+1.28(offset) = -1.28 to y = 0
+      boxCollider2D.size = Vector2.Lerp(boxSizeHidden, boxSize, elapsed / showDuration); //gradually increase size from zero to full box size
       // Update at max framerate.
       elapsed += Time.deltaTime;
       yield return null;
@@ -93,7 +93,7 @@ public class Mole : MonoBehaviour {
     yield return new WaitForSeconds(0.25f);
     // Whilst we were waiting we may have spawned again here, so just
     // check that hasn't happened before hiding it. This will stop it
-    // flickering in that case.
+    // flickering in that case. E.g. if spawn here again, the mole is moving up (hittable = true in the CreateNext method) and then will be hidden suddenly if did not use the condition if(!hittable):
     if (!hittable) {
       Hide();
     }
@@ -182,10 +182,10 @@ public class Mole : MonoBehaviour {
     animator = GetComponent<Animator>();
     boxCollider2D = GetComponent<BoxCollider2D>();
     // Work out collider values.
-    boxOffset = boxCollider2D.offset;
+    boxOffset = boxCollider2D.offset; //position when fully shown i.e. (0,0)
     boxSize = boxCollider2D.size;
     boxOffsetHidden = new Vector2(boxOffset.x, -startPosition.y / 2f);
-    boxSizeHidden = new Vector2(boxSize.x, 0f);
+    boxSizeHidden = new Vector2(boxSize.x, 0f); //zero size at start
   }
 
   public void Activate(int level) {
