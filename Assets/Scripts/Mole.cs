@@ -77,7 +77,7 @@ public class Mole : MonoBehaviour {
     // If we got to the end and it's still hittable then we missed it.
     if (hittable) {
       hittable = false;
-      // We only give time penalty if it isn't a bomb.
+      // We only give time penalty if it isn't a bomb. If it is a bomb, missing it will not have penalty.
       gameManager.Missed(moleIndex, moleType != MoleType.Bomb);
     }
   }
@@ -93,7 +93,7 @@ public class Mole : MonoBehaviour {
     yield return new WaitForSeconds(0.25f);
     // Whilst we were waiting we may have spawned again here, so just
     // check that hasn't happened before hiding it. This will stop it
-    // flickering in that case. E.g. if spawn here again, the mole is moving up (hittable = true in the CreateNext method) and then will be hidden suddenly if did not use the condition if(!hittable):
+    // flickering in that case. E.g. if spawn here again, the mole will be moved to the start position due to ShowHide coroutine, then it will be moving up (hittable = true in the CreateNext method) and then will be hidden suddenly if did not use the condition if(!hittable):
     if (!hittable) {
       Hide();
     }
@@ -104,7 +104,7 @@ public class Mole : MonoBehaviour {
       switch (moleType) {
         case MoleType.Standard:
           spriteRenderer.sprite = moleHit;
-          gameManager.AddScore(moleIndex);
+          gameManager.AddScore(moleIndex); //moleIndex had been set by GameManager when the game starts. Passing the moleIndex to AddScore to remove the mole from the currentMoles list.
           // Stop the animation
           StopAllCoroutines();
           StartCoroutine(QuickHide());

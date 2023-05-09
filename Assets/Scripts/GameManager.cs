@@ -17,10 +17,15 @@ public class GameManager : MonoBehaviour {
 
   // Global variables
   private float timeRemaining;
-  private HashSet<Mole> currentMoles = new HashSet<Mole>();
+  private HashSet<Mole> currentMoles = new HashSet<Mole>(); //similar to List<> but HashSet do not have ordering, it stores values unordered.
   private int score;
   private bool playing = false;
-
+  
+  //Save battery when the Start button is not clicked:
+  private void Start()
+  {
+        this.enabled = false;
+  }
   // This is public so the play button can see it.
   public void StartGame() {
     // Hide/show the UI elements we don't/do want to see.
@@ -40,7 +45,8 @@ public class GameManager : MonoBehaviour {
     score = 0;
     scoreText.text = "0";
     playing = true;
-  }
+    this.enabled = true; //to enable Update function to be called
+    }
 
   public void GameOver(int type) {
     // Show the message.
@@ -87,7 +93,7 @@ public class GameManager : MonoBehaviour {
     scoreText.text = $"{score}";
     // Increase time by a little bit.
     timeRemaining += 1;
-    // Remove from active moles.
+    // Remove from active moles. Because the moles had been tapped.
     currentMoles.Remove(moles[moleIndex]);
   }
 
