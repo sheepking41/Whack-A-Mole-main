@@ -3,7 +3,15 @@ guid: d54d44dceef8e3042ad5af5b62882de7
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - mole: {instanceID: 0}
+  - moleHardHat: {instanceID: 0}
+  - moleHatBroken: {instanceID: 0}
+  - moleHit: {instanceID: 0}
+  - moleHatHit: {instanceID: 0}
+  - explosionPrefab: {instanceID: 0}
+  - explosionSprite: {instanceID: 0}
+  - gameManager: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

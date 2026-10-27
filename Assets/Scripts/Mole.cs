@@ -225,7 +225,7 @@ public class Mole : MonoBehaviour {
 
     // --- Layer 0: FIRE (inside the plume). Glows yellow→orange→deep red, lingers behind smoke.
     // Sits between the front/back smoke puffs in sorting order so it appears "inside" the cloud.
-    Sprite fireSprite = customSprite != null ? customSprite : _procFlashSprite;
+    Sprite fireSprite = _procFlashSprite;
     SpriteRenderer fireY = MakeBurstChild(root, "FireYellow",  fireSprite, 16, sortLayer, sortBase);
     SpriteRenderer fireO = MakeBurstChild(root, "FireOrange",  fireSprite, 15, sortLayer, sortBase);
     SpriteRenderer fireR = MakeBurstChild(root, "FireDeepRed", fireSprite, 14, sortLayer, sortBase);
@@ -241,14 +241,28 @@ public class Mole : MonoBehaviour {
     Color fireRStart = new Color(0.75f, 0.12f, 0.05f, 0.90f); // deep red outer fire
     Color fireEnd    = new Color(0.60f, 0.10f, 0.00f, 0.00f); // fade out hot red
 
-    // --- Layer 1: BRIGHT CORE FLASH (top layer, biggest at start, fades fast) ------------
-    Sprite flashSprite = customSprite != null ? customSprite : _procFlashSprite;
-    SpriteRenderer flashSr = MakeBurstChild(root, "Flash", flashSprite, 20, sortLayer, sortBase);
+    // --- Layer 1: BRIGHT CORE FLASH (hot white pop above the burst, fades fast) -----------
+    Sprite flashSprite = _procFlashSprite;
+    SpriteRenderer flashSr = MakeBurstChild(root, "Flash", flashSprite, 21, sortLayer, sortBase);
     flashSr.transform.localScale = Vector3.one * baseScale * 1.3f;
     Color flashStart = Color.white;
 
+    // --- Layer 1.5: EXPLOSION SPRITE (the generated PNG fireball) -------------------------
+    // This is the MAIN visual of the hit. It sits in FRONT of the fire and the smoke plume,
+    // then fades out to reveal the rising smoke underneath. Sourced from the `explosionSprite`
+    // field; when that is unset we simply skip this layer and keep the procedural burst.
+    SpriteRenderer burstSr = null;
+    float burstScaleStart = 1.70f * baseScale;
+    float burstScalePeak  = 2.10f * baseScale;
+    float burstScaleEnd   = 2.60f * baseScale;
+    if (customSprite != null) {
+      burstSr = MakeBurstChild(root, "ExplosionSprite", customSprite, 20, sortLayer, sortBase);
+      burstSr.transform.localPosition = Vector3.zero; // centered on the mole
+      burstSr.transform.localScale = Vector3.one * burstScaleStart;
+    }
+
     // --- Layer 2: THREE SMOKE PUFFS (rise like steam + cover mole's face at spawn) --------
-    Sprite smokeSprite = customSprite != null ? customSprite : _procSmokeSprite;
+    Sprite smokeSprite = _procSmokeSprite;
     // Smoke1 is the FRONT, big central plume. Starts CENTERED on the mole (0,0) so it
     // INSTANTLY covers the mole face before rising. Smoke2/Smoke3 flank it with tiny offsets.
     SpriteRenderer smokeSr1 = MakeBurstChild(root, "Smoke1", smokeSprite, 19, sortLayer, sortBase); // front (in front of flash)
@@ -290,7 +304,7 @@ public class Mole : MonoBehaviour {
     SpriteRenderer[] sparks = new SpriteRenderer[sparkCount];
     Vector2[] sparkDirs = new Vector2[sparkCount];
     float[]   sparkSpeeds = new float[sparkCount];
-    Sprite ember = customSprite != null ? customSprite : _procEmberSprite;
+    Sprite ember = _procEmberSprite;
     for (int i = 0; i < sparkCount; i++) {
       // Most sparks fly UPWARD into the steam plume (cone of 110° centered on +Y axis).
       // A couple fly sideways/down slightly for a realistic detonation halo.
@@ -303,7 +317,7 @@ public class Mole : MonoBehaviour {
       float dy = Mathf.Sin(angle);
       sparkDirs[i]   = new Vector2(dx, dy);
       sparkSpeeds[i] = Random.Range(1.0f, 2.2f); // a bit faster to punch through the rising smoke
-      sparks[i] = MakeBurstChild(root, "Spark" + i, ember, 21 + i, sortLayer, sortBase);
+      sparks[i] = MakeBurstChild(root, "Spark" + i, ember, 22 + i, sortLayer, sortBase);
       sparks[i].transform.localScale = Vector3.one * Random.Range(0.28f, 0.55f);
       sparks[i].transform.localPosition =
           new Vector3(dx, dy, 0) * (sparkSpeeds[i] * baseScale * 0.12f);
@@ -320,6 +334,19 @@ public class Mole : MonoBehaviour {
       float flashT = Mathf.Clamp01(t / 0.55f);
       flashSr.transform.localScale = Vector3.Lerp(Vector3.one * baseScale * 1.7f, Vector3.one * baseScale * 0.3f, flashT);
       flashSr.color = Color.Lerp(flashStart, new Color(1, 1, 1, 0), flashT);
+
+      // --- EXPLOSION SPRITE: pops out on frame 1, keeps expanding slowly while fading out
+      if (burstSr != null) {
+        float popT = Mathf.Clamp01(t / 0.35f);
+        float growT = Mathf.Clamp01((t - 0.35f) / 0.65f);
+        float burstScale = Mathf.Lerp(burstScaleStart, burstScalePeak, Mathf.SmoothStep(0f, 1f, popT));
+        burstScale = Mathf.Lerp(burstScale, burstScaleEnd, growT);
+        burstSr.transform.localScale = Vector3.one * burstScale;
+        // Stay fully opaque through the initial punch, then fade out over the back half so the
+        // smoke plume (which keeps growing underneath) takes over.
+        float burstFade = Mathf.Clamp01((t - 0.45f) / 0.55f);
+        burstSr.color = Color.Lerp(Color.white, new Color(1f, 1f, 1f, 0f), burstFade);
+      }
 
       // --- FIRE (inner plume): scales, fades, and RISES slower than the smoke (lags inside)
       float fyScale = Mathf.SmoothStep(0.90f, 2.80f, t) * baseScale;
